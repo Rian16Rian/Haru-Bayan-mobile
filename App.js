@@ -4,7 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import WelcomeScreen from './screens/WelcomeScreen';
 import TabNavigator from './navigation/TabNavigator'; 
 
-//all dish categories 
+//all dish categories test
 import MainDish from './screens/categoriesmenu/MainDish';
 import Noodles from './screens/categoriesmenu/Noodles';
 import RiceDishes from './screens/categoriesmenu/RiceDishes';
