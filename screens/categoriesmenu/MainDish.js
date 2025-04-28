@@ -2,44 +2,79 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { supabase } from '../../lib/supabase';
 
 const MainDish = () => {
   const [recipes, setRecipes] = useState([]);
   const navigation = useNavigation();
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchMenu = async () => {
       const { data, error } = await supabase
-        .from('recipes')
-        .select('*')
-        .eq('category', 'Main Dish');
-      if (!error) setRecipes(data);
+        .from("menu")
+        .select(`
+          id,
+          price,
+          description,
+          recipes:recipe_id (
+            name,
+            category,
+            image_url
+          )
+        `)
+        .eq('recipes.category', 'Main Dish');
+
+      if (error) {
+        console.error("Error fetching menu:", error);
+      } else {
+        setRecipes(data);
+      }
     };
-    fetchData();
+
+    fetchMenu();
   }, []);
+
+  const renderItem = ({ item }) => {
+    if (!item.recipes) return null;
+
+    const { name, image_url } = item.recipes;
+
+    const fullImageUrl = image_url || null;
+
+    return (
+      <View style={styles.card}>
+        {fullImageUrl && (
+          <Image
+            source={{ uri: fullImageUrl }}
+            style={styles.image}
+            onError={() => console.log('Image failed to load:', fullImageUrl)}
+          />
+        )}
+        <Text style={styles.name}>{String(name)}</Text>
+        <Text style={styles.price}>₱{parseFloat(item.price).toFixed(2)}</Text>
+        <Text style={styles.description}>{String(item.description)}</Text>
+        <TouchableOpacity style={styles.button}>
+          <Text style={styles.buttonText}>Add to Order</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   return (
     <View style={styles.container}>
-      {/* Header Row */}
-      <View style={styles.headerRow}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={22} color="#333" />
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
-        <Text style={styles.title}>Main Dish</Text>
+        <Text style={styles.headerTitle}>Main Dish</Text>
+        <View style={{ width: 24 }} /> 
       </View>
 
-      {/* Recipe List */}
       <FlatList
         data={recipes}
         keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={{ paddingBottom: 30 }}
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <Image source={{ uri: item.image_url }} style={styles.image} />
-            <Text style={styles.name}>{item.name}</Text>
-            <Text style={styles.description}>{item.description}</Text>
-          </View>
-        )}
+        renderItem={renderItem}
+        contentContainerStyle={styles.list}
       />
     </View>
   );
@@ -48,45 +83,63 @@ const MainDish = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 50,      // for safe‑area on top
-    paddingHorizontal: 16,
     backgroundColor: '#fff',
   },
-  headerRow: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',  // center title
-    marginBottom: 20,
-    position: 'relative',      // allow absolute backButton
+    paddingTop: 50,
+    paddingHorizontal: 20,
+    paddingBottom: 10,
+    justifyContent: 'space-between',
+    backgroundColor: '#f0f0f0',
   },
-  backButton: {
-    position: 'absolute',
-    left: 16,                  // match container padding
-  },
-  title: {
-    fontSize: 22,
+  headerTitle: {
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#222',
+  },
+  list: {
+    paddingHorizontal: 10,
+    paddingBottom: 20,
   },
   card: {
-    backgroundColor: '#f2f2f2',
+    backgroundColor: '#fafafa',
     borderRadius: 10,
     padding: 10,
     marginBottom: 15,
+    elevation: 3,
   },
   image: {
     width: '100%',
     height: 160,
     borderRadius: 8,
+    marginBottom: 8,
   },
   name: {
     fontWeight: 'bold',
     fontSize: 16,
-    marginTop: 8,
+  },
+  price: {
+    fontWeight: 'bold',
+    fontSize: 14,
+    color: '#222',
+    marginTop: 4,
   },
   description: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#555',
+    marginVertical: 4,
+  },
+  button: {
+    backgroundColor: '#e63946',
+    padding: 10,
+    borderRadius: 6,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: '600',
   },
 });
 
