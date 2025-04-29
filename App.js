@@ -4,6 +4,9 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import WelcomeScreen from './screens/WelcomeScreen';
 import TabNavigator from './navigation/TabNavigator'; 
 
+import MenuScreen from './screens/MenuScreen';
+
+
 //all dish categories
 import MainDish from './screens/categoriesmenu/MainDish';
 import Noodles from './screens/categoriesmenu/Noodles';
@@ -14,6 +17,10 @@ import Appetizers from './screens/categoriesmenu/Appetizers';
 import StreetFoodSnacks from './screens/categoriesmenu/StreetFoodSnacks';
 import DessertsSweets from './screens/categoriesmenu/DessertsSweets';
 import Beverages from './screens/categoriesmenu/Beverages';
+
+import UserSignup from './screens/UserSignupScreen';
+import UserLogin from './screens/UserLoginScreen';
+
 
 const Stack = createNativeStackNavigator();
 
@@ -33,6 +40,12 @@ export default function App() {
         <Stack.Screen name="StreetFoodSnacks" component={StreetFoodSnacks} />
         <Stack.Screen name="DessertsSweets" component={DessertsSweets} />
         <Stack.Screen name="Beverages" component={Beverages} />
+
+        <Stack.Screen name ="UserSignup" component={UserSignup}/>
+        <Stack.Screen name ="UserLogin" component={UserLogin}/>
+        <Stack.Screen name ="MenuScreen" component={MenuScreen}/>
+
+
         
       </Stack.Navigator>
     </NavigationContainer>

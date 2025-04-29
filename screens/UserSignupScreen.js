@@ -1,30 +1,37 @@
 import React from 'react';
 import { View, Image, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground } from 'react-native';
 
-const UserScreen = () => {
+const UserScreen = ({ navigation }) => {
   return (
     <ImageBackground 
-      source={require('../assets/sakura.jpg')} // Ensure this path is correct
+      source={require('../assets/sakura.jpg')}
       style={styles.background} 
-      resizeMode="cover" // Ensures the image covers the full screen
+      resizeMode="cover"
     >
       <View style={styles.container}>
-        {/* Centered Logo */}
+        {/* Logo */}
         <View style={styles.logoContainer}>
           <Image
-            source={require('../assets/harulogo.png')} // Ensure this path is correct
+            source={require('../assets/harulogo.png')}
             style={styles.logo}
           />
           <Text style={styles.logoText}>HARU-BAYAN</Text>
         </View>
 
-        {/* Create Account Form */}
+        {/* Form */}
         <View style={styles.formContainer}>
-          <Text style={styles.createAccountLabel}>CREATE ACCOUNT</Text>
+          <Text style={styles.createAccountLabel}>CREATE YOUR ACCOUNT</Text>
+
           <TextInput
             style={styles.input}
-            placeholder="Email or Username"
+            placeholder="Username"
             placeholderTextColor="#888"
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            placeholderTextColor="#888"
+            keyboardType="email-address"
           />
           <TextInput
             style={styles.input}
@@ -32,22 +39,34 @@ const UserScreen = () => {
             placeholderTextColor="#888"
             secureTextEntry
           />
+          <TextInput
+            style={styles.input}
+            placeholder="Confirm Password"
+            placeholderTextColor="#888"
+            secureTextEntry
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Address"
+            placeholderTextColor="#888"
+          />
 
-          {/* Create Account Button */}
-          <TouchableOpacity style={styles.button} onPress={() => alert('Create Account')}>
+          {/* Signup Button */}
+          <TouchableOpacity 
+            style={styles.button} 
+            onPress={() => navigation.navigate('UserLogin')}
+          >
             <Text style={styles.buttonText}>Sign up</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Already have an account? */}
+        {/* Already have account? */}
         <View style={styles.createAccountContainer}>
           <Text style={styles.createAccountText}>
             Already have an account?{' '}
           </Text>
-          <TouchableOpacity onPress={() => alert('Navigate to Login')}>
-            <Text style={styles.createAccountLink}>
-              Login
-            </Text>
+          <TouchableOpacity onPress={() => navigation.navigate('UserLogin')}>
+            <Text style={styles.createAccountLink}>Login</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -59,7 +78,7 @@ export default UserScreen;
 
 const styles = StyleSheet.create({
   background: {
-    flex: 1, // Ensures the background takes up the full screen
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -81,49 +100,57 @@ const styles = StyleSheet.create({
   },
   logoText: {
     marginTop: -15,
-    fontSize: 28, // Larger than CREATE ACCOUNT label
+    fontSize: 28,
     fontWeight: '700',
     color: '#333',
     textAlign: 'center',
   },
   formContainer: {
-    width: 320, // Fixed width for form (doesn't stretch across full screen)
+    width: 280,
     marginTop: 10,
   },
   createAccountLabel: {
-    fontSize: 18, // Smaller than logo text
-    fontWeight: '500',
-    color: '#333',
-    marginBottom: 10,
-    textAlign: 'left', // Align the label to the left
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#9b001e',
+    marginBottom: 20,
+    textAlign: 'center',
   },
   input: {
     backgroundColor: '#fff',
-    padding: 16, // Increased padding for larger input fields
-    marginBottom: 14, // Adjust spacing between inputs
-    borderRadius: 20,
-    borderWidth: 3,
+    padding: 12,
+    marginBottom: 12,
+    borderRadius: 15,
+    borderWidth: 2,
     borderColor: '#9b001e',
-    fontSize: 18, // Larger font sie for inputs
+    fontSize: 16,
   },
   button: {
     backgroundColor: '#9b001e',
-    paddingVertical: 18, // Larger padding for the button
-    borderRadius: 80,
+    paddingVertical: 16,
+    borderRadius: 20,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
   },
   buttonText: {
-    fontSize: 20, // Larger button text
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '700',
     color: '#f7c6d7',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
   createAccountContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 15,
   },
   createAccountText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '500',
     color: '#333',
     marginRight: 5,

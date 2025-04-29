@@ -4,7 +4,7 @@ import { Image, View, StyleSheet } from 'react-native';
 import HomeScreen from '../screens/HomeScreen';
 import ServiceScreen from '../screens/ServiceScreen';
 import MenuScreen from '../screens/MenuScreen';
-import UserScreen from '../screens/UserScreen';
+import UserScreen from '../screens/Choose-signup-login-Screen';
 import Header from '../components/Header';
 
 const Tab = createBottomTabNavigator();
@@ -53,6 +53,7 @@ export default function TabNavigator() {
         <Tab.Screen name="Service" component={ServiceScreen} />
         <Tab.Screen name="Menu" component={MenuScreen} />
         <Tab.Screen name="User" component={UserScreen} />
+
       </Tab.Navigator>
     </View>
   );
