@@ -139,7 +139,7 @@ export default StyleSheet.create({
     textAlign: 'center',
     marginTop: 5,
     marginBottom: 5,
-    color: '#39000B',
+    color: '#680303',
   },
   description: {
     textAlign: 'center',
@@ -155,13 +155,13 @@ export default StyleSheet.create({
   strongTitle: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#39000b',
+    color: '#680303',
     marginBottom: 10,
     textAlign: 'left',
   },
   strongTextBox: {
     width: '100%',
-    backgroundColor: '#9b001e',
+    backgroundColor: '#800000',
     padding: 15,
     borderRadius: 8,
   },
@@ -187,7 +187,7 @@ export default StyleSheet.create({
   statNumber: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#9b001e',
+    color: '#680303',
   },
   statLabel: {
     fontSize: 12,
@@ -224,7 +224,7 @@ export default StyleSheet.create({
     minWidth: '45%',
   },
   contactCard: {
-    backgroundColor: '#f8c6d8',
+    backgroundColor: '#680303',
     padding: 15,
     borderRadius: 10,
     marginBottom: 15,
@@ -232,11 +232,16 @@ export default StyleSheet.create({
   contactCardTitle: {
     fontWeight: 'bold',
     fontSize: 16,
-    color: '#6a0038',
+    color: '#f3ecec',
+    marginBottom: 5,
+    },
+    contactCardDescription: {
+    color: '#f3ecec', // Light color for readability on dark background
     marginBottom: 5,
   },
+    
   contactLink: {
-    color: '#007bff',
+    color: '#f3ecec',
     marginTop: 5,
     textDecorationLine: 'underline',
   },
@@ -244,24 +249,30 @@ export default StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
+    
   },
   contactInput: {
-    borderColor: '#ccc',
+    borderColor: '#680303',
     borderWidth: 1,
     borderRadius: 8,
     padding: 10,
     marginBottom: 10,
     backgroundColor: '#ffe6e6',
+    shadowColor: '#680303',
+    shadowOpacity: 0.25,
+    shadowOffset: { width: 5, height: 2 },
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   sendButton: {
-    backgroundColor: '#fa7e96',
+    backgroundColor: '#680303',
     alignItems: 'center',
     padding: 12,
     borderRadius: 10,
     marginTop: 10,
   },
   sendButtonText: {
-    color: '#fff',
+    color: '#f3ecec',
     fontWeight: 'bold',
   },
 
@@ -269,6 +280,7 @@ export default StyleSheet.create({
   teamSection: {
     backgroundColor: '#372327',
     paddingVertical: 15,
+    marginBottom: 60, 
   },
   ITteam: {
     fontSize: 20,
