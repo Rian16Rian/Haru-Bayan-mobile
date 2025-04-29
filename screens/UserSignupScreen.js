@@ -1,30 +1,30 @@
 import React from 'react';
 import { View, Image, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground } from 'react-native';
 
-const UserScreen = ({ navigation }) => {
+const UserSignupScreen = ({ navigation }) => {
   return (
     <ImageBackground 
-      source={require('../assets/sakura.jpg')}
-      style={styles.background} 
+      source={require('../assets/temple.jpg')}
+      style={styles.background}
       resizeMode="cover"
     >
       <View style={styles.container}>
-        {/* Logo */}
-        <View style={styles.logoContainer}>
-          <Image
-            source={require('../assets/harulogo.png')}
-            style={styles.logo}
-          />
-          <Text style={styles.logoText}>HARU-BAYAN</Text>
-        </View>
-
-        {/* Form */}
+        {/* Transparent Form Container */}
         <View style={styles.formContainer}>
-          <Text style={styles.createAccountLabel}>CREATE YOUR ACCOUNT</Text>
+          {/* Logo and Text Inside the Container */}
+          <View style={styles.logoContainer}>
+            <Image
+              source={require('../assets/harulogo.png')}
+              style={styles.logo}
+            />
+            <Text style={styles.logoText}>HARU-BAYAN</Text>
+          </View>
+
+          <Text style={styles.signupLabel}>Create Account</Text>
 
           <TextInput
             style={styles.input}
-            placeholder="Username"
+            placeholder="Full Name"
             placeholderTextColor="#888"
           />
           <TextInput
@@ -45,36 +45,28 @@ const UserScreen = ({ navigation }) => {
             placeholderTextColor="#888"
             secureTextEntry
           />
-          <TextInput
-            style={styles.input}
-            placeholder="Address"
-            placeholderTextColor="#888"
-          />
 
-          {/* Signup Button */}
           <TouchableOpacity 
-            style={styles.button} 
-            onPress={() => navigation.navigate('UserLogin')}
+            style={styles.button}
+            onPress={() => alert('Sign up pressed')}
           >
-            <Text style={styles.buttonText}>Sign up</Text>
+            <Text style={styles.buttonText}>Sign Up</Text>
           </TouchableOpacity>
-        </View>
 
-        {/* Already have account? */}
-        <View style={styles.createAccountContainer}>
-          <Text style={styles.createAccountText}>
-            Already have an account?{' '}
-          </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('UserLogin')}>
-            <Text style={styles.createAccountLink}>Login</Text>
-          </TouchableOpacity>
+          {/* Already have an account? */}
+          <View style={styles.createAccountContainer}>
+            <Text style={styles.createAccountText}>Already have an account?</Text>
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+              <Text style={styles.createAccountLink}>Log in</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </ImageBackground>
   );
 };
 
-export default UserScreen;
+export default UserSignupScreen;
 
 const styles = StyleSheet.create({
   background: {
@@ -88,31 +80,40 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
   },
+  formContainer: {
+    width: 300, // Width of the form container (same for input fields and button)
+    marginTop: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.6)', // semi-transparent white
+    padding: 25,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 6,
+    alignItems: 'center', // Center the contents
+  },
   logoContainer: {
-    marginBottom: 40,
+    marginBottom: 20,
     justifyContent: 'center',
     alignItems: 'center',
   },
   logo: {
-    width: 150,
-    height: 150,
+    width: 120,
+    height: 120,
     resizeMode: 'contain',
   },
   logoText: {
-    marginTop: -15,
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '700',
-    color: '#333',
+    color: '#b30000', // Color changed to match the "Create Account" label
+    marginTop: 10,
     textAlign: 'center',
   },
-  formContainer: {
-    width: 280,
-    marginTop: 10,
-  },
-  createAccountLabel: {
+  signupLabel: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#9b001e',
+    color: '#222', // Color changed to match "HARU-BAYAN" text
     marginBottom: 20,
     textAlign: 'center',
   },
@@ -121,13 +122,15 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 12,
     borderRadius: 15,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: '#9b001e',
     fontSize: 16,
+    width: '100%', // Ensures all input fields are the same width
   },
   button: {
     backgroundColor: '#9b001e',
-    paddingVertical: 16,
+    paddingVertical: 18, // Increased padding for a bigger button
+    paddingHorizontal: 30, // Added horizontal padding to make it wider
     borderRadius: 20,
     alignItems: 'center',
     shadowColor: '#000',
@@ -135,9 +138,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 5,
+    width: '100%', // Makes the button the same width as the input fields
   },
   buttonText: {
-    fontSize: 18,
+    fontSize: 16, // Increased font size
     fontWeight: '700',
     color: '#f7c6d7',
     letterSpacing: 1,
@@ -151,12 +155,11 @@ const styles = StyleSheet.create({
   },
   createAccountText: {
     fontSize: 16,
-    fontWeight: '500',
     color: '#333',
-    marginRight: 5,
   },
+  
   createAccountLink: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: '#e91e63',
     textDecorationLine: 'underline',
