@@ -16,10 +16,11 @@ const Beverages = () => {
           id,
           price,
           description,
+          available, 
           recipes:recipe_id (
-            name,
-            category,
-            image_url
+          name,
+          category,
+          image_url
           )
         `)
         .eq('recipes.category', 'Beverages');
@@ -36,30 +37,38 @@ const Beverages = () => {
 
   const renderItem = ({ item }) => {
     if (!item.recipes) return null;
-
+  
     const { name, image_url } = item.recipes;
-
     const fullImageUrl = image_url || null;
-
+    const isAvailable = item.available;
     return (
       <View style={styles.card}>
         {fullImageUrl && (
           <Image
-            source={{ uri: fullImageUrl }}
-            style={styles.image}
-            onError={() => console.log('Image failed to load:', fullImageUrl)}
-          />
+          source={{ uri: fullImageUrl }}
+          style={[styles.image, !isAvailable && styles.unavailableImage]}
+          onError={() => console.log('Image failed to load:', fullImageUrl)}
+        />
+        
         )}
         <Text style={styles.name}>{String(name)}</Text>
         <Text style={styles.price}>₱{parseFloat(item.price).toFixed(2)}</Text>
         <Text style={styles.description}>{String(item.description)}</Text>
-        <TouchableOpacity style={styles.button}>
+        <Text style={[styles.status, { color: isAvailable ? 'green' : 'red' }]}>
+          {isAvailable ? 'AVAILABLE' : 'UNAVAILABLE'}
+        </Text>
+        <TouchableOpacity
+          style={[
+            styles.button,
+            !isAvailable && { backgroundColor: '#aaa' },
+          ]}
+          disabled={!isAvailable}
+        >
           <Text style={styles.buttonText}>Add to Order</Text>
         </TouchableOpacity>
       </View>
     );
   };
-
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -141,6 +150,15 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
   },
+  status: {
+    fontWeight: 'bold',
+    fontSize: 13,
+    marginTop: 4,
+  },
+  unavailableImage: {
+    opacity: 0.3, // visually looks like gray/dimmed
+  },
+  
 });
 
 export default Beverages;
