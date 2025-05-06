@@ -1,9 +1,9 @@
-// components/CustomHeader.js
-import React, { useState } from 'react';
-import { View, Image, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React from 'react';
+import { View, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 const CustomHeader = () => {
-  const [showDropdown, setShowDropdown] = useState(false);
+  const navigation = useNavigation(); // Hook for navigation
 
   return (
     <View style={styles.header}>
@@ -13,27 +13,16 @@ const CustomHeader = () => {
         style={styles.logo}
       />
 
-      {/* User icon and dropdown on the right */}
-      <View style={styles.userContainer}>
-        {/* Replace the MaterialIcons with your custom PNG image */}
-        <TouchableOpacity onPress={() => setShowDropdown(!showDropdown)}>
-          <Image
-            source={require('../assets/dropdown.png')} // Replace with your dropdown PNG file
-            style={styles.dropdownIcon}
-          />
-        </TouchableOpacity>
-
-        {showDropdown && (
-          <View style={styles.dropdown}>
-            <TouchableOpacity style={styles.dropdownItem}>
-              <Text style={styles.dropdownText}>Login</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.dropdownItem}>
-              <Text style={styles.dropdownText}>Sign Up</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
+      {/* Shopping Cart icon on the right */}
+      <TouchableOpacity
+        style={styles.iconContainer}
+        onPress={() => navigation.navigate('Cart')} // Navigate to Cart screen
+      >
+        <Image
+          source={require('../assets/cart.png')} // Replace with your cart icon
+          style={styles.cartIcon}
+        />
+      </TouchableOpacity>
     </View>
   );
 };
@@ -56,32 +45,12 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
     marginTop: 10,
   },
-  userContainer: {
-    position: 'relative',
+  iconContainer: {
     marginTop: 10,
   },
-  dropdownIcon: {
-    width: 50, // Adjust the width as needed for your PNG
-    height: 40, // Adjust the height as needed for your PNG
-    resizeMode: 'contain', // Ensures the image scales correctly
-  },
-  dropdown: {
-    position: 'absolute',
-    top: 40,
-    right: 0,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 8,
-    elevation: 6,
-    zIndex: 1,
-    width: 120, // Adjust the width to fit the dropdown items
-  },
-  dropdownItem: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-  },
-  dropdownText: {
-    fontSize: 14,
-    color: '#000',
+  cartIcon: {
+    width: 35,
+    height: 35,
+    resizeMode: 'contain',
   },
 });

@@ -3,6 +3,8 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import WelcomeScreen from './screens/WelcomeScreen';
 import TabNavigator from './navigation/TabNavigator'; 
+import CartScreen from './screens/CartScreen'; // Adjust path as needed
+
 
 import MenuScreen from './screens/MenuScreen';
 
@@ -44,6 +46,8 @@ export default function App() {
         <Stack.Screen name ="UserSignup" component={UserSignup}/>
         <Stack.Screen name ="UserLogin" component={UserLogin}/>
         <Stack.Screen name ="MenuScreen" component={MenuScreen}/>
+        <Stack.Screen name="Cart" component={CartScreen} />
+
 
 
         
