@@ -23,22 +23,26 @@ const carouselItems = [
   },
 ];
 
-const renderCarouselItem = ({ item }) => (
-  <View style={styles.slide}>
-    <Image source={item.image} style={styles.carouselImage} />
-    <View style={styles.overlay} />
-    <View style={styles.carouselContent}>
-      <Text style={styles.carouselCaption}>{item.caption}</Text>
-      <TouchableOpacity style={styles.orderNowBtn} onPress={() => console.log('Order Now pressed')}>
-        <Text style={styles.orderNowText}>Order Now</Text>
-      </TouchableOpacity>
-    </View>
-  </View>
-);
-
 export default function HomeScreen({ navigation }) {
   const flatListRef = useRef(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  // ✅ Gibutang na ang renderCarouselItem sulod sa HomeScreen para magamit ang navigation
+  const renderCarouselItem = ({ item }) => (
+    <View style={styles.slide}>
+      <Image source={item.image} style={styles.carouselImage} />
+      <View style={styles.overlay} />
+      <View style={styles.carouselContent}>
+        <Text style={styles.carouselCaption}>{item.caption}</Text>
+        <TouchableOpacity
+          style={styles.orderNowBtn}
+          onPress={() => navigation.navigate('Menu')} // ✅ Mo-navigate na ni sa Menu screen
+        >
+          <Text style={styles.orderNowText}>Order Now</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -61,7 +65,7 @@ export default function HomeScreen({ navigation }) {
         showsHorizontalScrollIndicator={false}
         renderItem={renderCarouselItem}
         keyExtractor={(item, index) => index.toString()}
-        scrollEnabled={false} // Prevent manual swiping if you want full automation
+        scrollEnabled={false}
       />
 
       {/* 🍽️ Dine-In & Delivery Buttons */}
