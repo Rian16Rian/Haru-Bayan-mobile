@@ -18,7 +18,7 @@ const OtpVerificationScreen = ({ route, navigation }) => {
 
       if (response.ok) {
         Alert.alert('Success', 'Your account has been verified!');
-        navigation.navigate('LoginScreen');
+        navigation.navigate('UserLogin');
       } else {
         Alert.alert('Verification Failed', data.error || 'Invalid OTP.');
       }
