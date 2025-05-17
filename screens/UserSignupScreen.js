@@ -1,7 +1,45 @@
-import React from 'react';
-import { View, Image, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground } from 'react-native';
+import React, { useState } from 'react';
+import { Alert, Image, ImageBackground, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const UserSignupScreen = ({ navigation }) => {
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  const handleSignup = async () => {
+    if (password !== confirmPassword) {
+      Alert.alert('Error', 'Passwords do not match');
+      return;
+    }
+
+    try {
+      const response = await fetch('http://192.168.1.3:8000/api/auth/signup/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: fullName,
+          email: email,
+          password: password,
+          re_password: confirmPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        navigation.navigate('OtpVerificationScreen', { username: fullName });
+      } else {
+        Alert.alert('Signup Failed', data.message || 'Please try again.');
+      }
+    } catch (error) {
+      console.error('Network error:', error);
+      Alert.alert('Error', 'Network request failed');
+    }
+  };
+
   return (
     <ImageBackground 
       source={require('../assets/temple.jpg')}
@@ -9,9 +47,7 @@ const UserSignupScreen = ({ navigation }) => {
       resizeMode="cover"
     >
       <View style={styles.container}>
-        {/* Transparent Form Container */}
         <View style={styles.formContainer}>
-          {/* Logo and Text Inside the Container */}
           <View style={styles.logoContainer}>
             <Image
               source={require('../assets/harulogo.png')}
@@ -26,34 +62,41 @@ const UserSignupScreen = ({ navigation }) => {
             style={styles.input}
             placeholder="Full Name"
             placeholderTextColor="#888"
+            value={fullName}
+            onChangeText={setFullName}
           />
           <TextInput
             style={styles.input}
             placeholder="Email"
             placeholderTextColor="#888"
             keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
           />
           <TextInput
             style={styles.input}
             placeholder="Password"
             placeholderTextColor="#888"
             secureTextEntry
+            value={password}
+            onChangeText={setPassword}
           />
           <TextInput
             style={styles.input}
             placeholder="Confirm Password"
             placeholderTextColor="#888"
             secureTextEntry
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
           />
 
           <TouchableOpacity 
             style={styles.button}
-            onPress={() => alert('Sign up pressed')}
+            onPress={handleSignup}
           >
             <Text style={styles.buttonText}>Sign Up</Text>
           </TouchableOpacity>
 
-          {/* Already have an account? */}
           <View style={styles.createAccountContainer}>
             <Text style={styles.createAccountText}>Already have an account?</Text>
             <TouchableOpacity onPress={() => navigation.goBack()}>

@@ -1,27 +1,28 @@
-import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import WelcomeScreen from './screens/WelcomeScreen';
-import TabNavigator from './navigation/TabNavigator'; 
+import React from 'react';
+import TabNavigator from './navigation/TabNavigator';
 import CartScreen from './screens/CartScreen'; // Adjust path as needed
+import OtpVerificationScreen from './screens/OtpVerificationScreen';
+import WelcomeScreen from './screens/WelcomeScreen';
 
 
 import MenuScreen from './screens/MenuScreen';
 
 
 //all dish categories
+import Appetizers from './screens/categoriesmenu/Appetizers';
+import Beverages from './screens/categoriesmenu/Beverages';
+import DessertsSweets from './screens/categoriesmenu/DessertsSweets';
 import MainDish from './screens/categoriesmenu/MainDish';
 import Noodles from './screens/categoriesmenu/Noodles';
 import RiceDishes from './screens/categoriesmenu/RiceDishes';
-import SoupsStews from './screens/categoriesmenu/SoupsStews';
 import SideDishes from './screens/categoriesmenu/SideDishes';
-import Appetizers from './screens/categoriesmenu/Appetizers';
+import SoupsStews from './screens/categoriesmenu/SoupsStews';
 import StreetFoodSnacks from './screens/categoriesmenu/StreetFoodSnacks';
-import DessertsSweets from './screens/categoriesmenu/DessertsSweets';
-import Beverages from './screens/categoriesmenu/Beverages';
 
-import UserSignup from './screens/UserSignupScreen';
 import UserLogin from './screens/UserLoginScreen';
+import UserSignup from './screens/UserSignupScreen';
 
 
 const Stack = createNativeStackNavigator();
@@ -44,6 +45,7 @@ export default function App() {
         <Stack.Screen name="Beverages" component={Beverages} />
 
         <Stack.Screen name ="UserSignup" component={UserSignup}/>
+        <Stack.Screen name="OtpVerificationScreen" component={OtpVerificationScreen} />
         <Stack.Screen name ="UserLogin" component={UserLogin}/>
         <Stack.Screen name ="MenuScreen" component={MenuScreen}/>
         <Stack.Screen name="Cart" component={CartScreen} />
