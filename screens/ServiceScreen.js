@@ -1,14 +1,45 @@
 import React, { useState } from 'react';
-import { ScrollView, Text, View, Image, TextInput, TouchableOpacity, Linking } from 'react-native';
+import { ScrollView, Text, View, Image, TextInput, TouchableOpacity, Alert, Linking } from 'react-native';
 import styles from '../styles/globalStyles';
 
 export default function ServiceScreen() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSend = () => {
-    alert(`Message sent!\nName: ${name}\nEmail: ${email}`);
+  const handleSend = async () => {
+    if (!name || !email || !message) {
+      Alert.alert('Error', 'Please fill all fields');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch('http://192.168.1.9:8000/contact/', {  // <-- Your Django backend URL here
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, email, message }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        Alert.alert('Success', data.message);
+        setName('');
+        setEmail('');
+        setMessage('');
+      } else {
+        Alert.alert('Error', data.error || 'Something went wrong');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to send message');
+    }
+
+    setLoading(false);
   };
 
   return (
@@ -146,8 +177,10 @@ export default function ServiceScreen() {
           <TextInput
             placeholder="Email"
             style={styles.contactInput}
+            keyboardType="email-address"
             value={email}
             onChangeText={setEmail}
+            autoCapitalize="none"
           />
           <TextInput
             placeholder="Message"
@@ -157,8 +190,12 @@ export default function ServiceScreen() {
             value={message}
             onChangeText={setMessage}
           />
-          <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
-            <Text style={styles.sendButtonText}>SEND</Text>
+          <TouchableOpacity
+            style={[styles.sendButton, loading && { opacity: 0.6 }]}
+            onPress={handleSend}
+            disabled={loading}
+          >
+            <Text style={styles.sendButtonText}>{loading ? 'Sending...' : 'SEND'}</Text>
           </TouchableOpacity>
         </View>
       </View>

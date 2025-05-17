@@ -1,22 +1,46 @@
-import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, ImageBackground } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, ImageBackground, Alert } from 'react-native';
 
 const LoginScreen = ({ navigation }) => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleLogin = async () => {
+    if (!username || !password) {
+      Alert.alert('Error', 'Please fill in all fields!');
+      return;
+    }
+
+    try {
+      const response = await fetch('http://192.168.1.9:8000/api/login/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.status === 200) {
+        Alert.alert('Success', data.message);
+        navigation.navigate('MenuScreen');
+      } else {
+        Alert.alert('Login Failed', data.message || 'Invalid credentials.');
+      }
+    } catch (error) {
+      console.error('Login Error:', error);
+      Alert.alert('Error', 'Something went wrong. Please try again.');
+    }
+  };
+
   return (
-    <ImageBackground
-      source={require('../assets/temple.jpg')} // Make sure the path is correct
-      style={styles.background}
-      resizeMode="cover"
-    >
+    <ImageBackground source={require('../assets/temple.jpg')} style={styles.background} resizeMode="cover">
       <View style={styles.overlay}>
         <View style={styles.card}>
-          <Image
-            source={require('../assets/harulogo.png')} // Your logo
-            style={styles.logo}
-          />
+          <Image source={require('../assets/harulogo.png')} style={styles.logo} />
           <Text style={styles.title}>HARU-BAYAN</Text>
           <Text style={styles.subtitle}>A Taste of Spring in Every Dish</Text>
-
           <Text style={styles.welcome}>Welcome Back!</Text>
 
           <View style={styles.formContainer}>
@@ -24,15 +48,19 @@ const LoginScreen = ({ navigation }) => {
               style={styles.input}
               placeholder="Username"
               placeholderTextColor="#888"
+              onChangeText={setUsername}
+              value={username}
             />
             <TextInput
               style={styles.input}
               placeholder="Password"
               placeholderTextColor="#888"
               secureTextEntry
+              onChangeText={setPassword}
+              value={password}
             />
 
-            <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('MenuScreen')}>
+            <TouchableOpacity style={styles.button} onPress={handleLogin}>
               <Text style={styles.buttonText}>LOG IN</Text>
             </TouchableOpacity>
           </View>
@@ -50,6 +78,7 @@ const LoginScreen = ({ navigation }) => {
 };
 
 export default LoginScreen;
+
 
 const styles = StyleSheet.create({
   background: {
