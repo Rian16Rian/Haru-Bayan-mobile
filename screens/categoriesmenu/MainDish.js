@@ -10,24 +10,24 @@ import {
   TextInput,
   Alert,
 } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../lib/supabase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const MainDish = () => {
   const [recipes, setRecipes] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedQuantity, setSelectedQuantity] = useState('1');
   const [selectedItem, setSelectedItem] = useState(null);
-
+  const [username, setUsername] = useState(null);
   const navigation = useNavigation();
-  const route = useRoute();
-
-  // get userData from route params (or however you pass user info)
-  const userData = route.params?.userData || null;
 
   useEffect(() => {
-    const fetchMenu = async () => {
+    const fetchData = async () => {
+      const storedUsername = await AsyncStorage.getItem('username');
+      setUsername(storedUsername);
+
       const { data, error } = await supabase
         .from('menu')
         .select(`
@@ -50,24 +50,26 @@ const MainDish = () => {
       }
     };
 
-    fetchMenu();
+    fetchData();
   }, []);
 
   const handleAddToOrderPress = (item) => {
     setSelectedItem(item);
-    setSelectedQuantity('1'); // reset quantity to 1 each time
+    setSelectedQuantity('1');
     setModalVisible(true);
   };
 
   const handleConfirmOrder = async () => {
-    if (!userData) {
-      alert('You need to login or create an account first to confirm your order.');
+    if (!username) {
+      Alert.alert(
+        'Login Required',
+        'Please login to confirm your order.',
+        [{ text: 'OK', onPress: () => navigation.navigate('UserLogin') }]
+      );
       setModalVisible(false);
-      navigation.navigate('UserLogin');  // redirect to Login screen
       return;
     }
 
-    const customer_id = userData.id;
     const quantity = parseInt(selectedQuantity);
     if (!quantity || quantity <= 0) {
       alert('Please enter a valid quantity.');
@@ -76,21 +78,34 @@ const MainDish = () => {
 
     const total = selectedItem.price * quantity;
 
-    try {
-      const { data, error } = await supabase
-        .from('customers_order')
-        .insert([
-          {
-            customer_id,
-            menu_item_id: selectedItem.id,
-            quantity,
-            total_price: total,
-            status: 'pending',
-          },
-        ]);
+    // 🔍 Get customer_id from username
+    const { data: customerData, error: customerError } = await supabase
+      .from('customers')
+      .select('id')
+      .eq('username', username)
+      .single();
 
-      if (error) {
-        alert(`Failed to add order: ${error.message}`);
+    if (customerError || !customerData) {
+      alert('Customer not found.');
+      setModalVisible(false);
+      return;
+    }
+
+    const customer_id = customerData.id;
+
+    try {
+      const { error: insertError } = await supabase.from('customers_order').insert([
+        {
+          customer_id: customer_id,
+          menu_item_id: selectedItem.id,
+          quantity,
+          total_price: total,
+          status: 'pending',
+        },
+      ]);
+
+      if (insertError) {
+        alert('Failed to confirm order: ' + insertError.message);
       } else {
         alert('Order confirmed!');
         setModalVisible(false);
@@ -104,21 +119,19 @@ const MainDish = () => {
     if (!item.recipes) return null;
 
     const { name, image_url } = item.recipes;
-    const fullImageUrl = image_url || null;
     const isAvailable = item.available;
 
     return (
       <View style={styles.card}>
-        {fullImageUrl && (
+        {image_url && (
           <Image
-            source={{ uri: fullImageUrl }}
+            source={{ uri: image_url }}
             style={[styles.image, !isAvailable && styles.unavailableImage]}
-            onError={() => console.log('Image failed to load:', fullImageUrl)}
           />
         )}
-        <Text style={styles.name}>{String(name)}</Text>
+        <Text style={styles.name}>{name}</Text>
         <Text style={styles.price}>₱{parseFloat(item.price).toFixed(2)}</Text>
-        <Text style={styles.description}>{String(item.description)}</Text>
+        <Text style={styles.description}>{item.description}</Text>
         <Text style={[styles.status, { color: isAvailable ? 'green' : 'red' }]}>
           {isAvailable ? 'AVAILABLE' : 'UNAVAILABLE'}
         </Text>
@@ -150,7 +163,6 @@ const MainDish = () => {
         contentContainerStyle={styles.list}
       />
 
-      {/* Modal for Quantity */}
       <Modal
         visible={modalVisible}
         transparent={true}
@@ -165,21 +177,19 @@ const MainDish = () => {
               keyboardType="numeric"
               value={selectedQuantity}
               onChangeText={setSelectedQuantity}
-              maxLength={3}
-              autoFocus={true}
             />
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: '#aaa' }]}
+                style={styles.modalButton}
+                onPress={handleConfirmOrder}
+              >
+                <Text style={styles.modalButtonText}>Confirm</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: '#ccc' }]}
                 onPress={() => setModalVisible(false)}
               >
                 <Text style={styles.modalButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: '#e63946' }]}
-                onPress={handleConfirmOrder}
-              >
-                <Text style={[styles.modalButtonText, { color: '#fff' }]}>Confirm</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -189,6 +199,8 @@ const MainDish = () => {
   );
 };
 
+export default MainDish;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -197,110 +209,106 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: 50,
-    paddingHorizontal: 20,
-    paddingBottom: 10,
+    padding: 15,
     justifyContent: 'space-between',
-    backgroundColor: '#f0f0f0',
+    borderBottomWidth: 1,
+    borderColor: '#ddd',
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
   },
   list: {
-    paddingHorizontal: 10,
-    paddingBottom: 20,
+    padding: 10,
   },
   card: {
-    backgroundColor: '#fafafa',
-    borderRadius: 10,
-    padding: 10,
+    backgroundColor: '#fdfdfd',
+    borderRadius: 15,
+    padding: 15,
     marginBottom: 15,
     elevation: 3,
   },
   image: {
     width: '100%',
     height: 160,
-    borderRadius: 8,
-    marginBottom: 8,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  unavailableImage: {
+    opacity: 0.4,
   },
   name: {
-    fontWeight: 'bold',
-    fontSize: 16,
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#333',
   },
   price: {
-    fontWeight: 'bold',
-    fontSize: 14,
-    color: '#222',
-    marginTop: 4,
+    fontSize: 16,
+    color: '#b30000',
+    marginBottom: 5,
   },
   description: {
-    fontSize: 13,
+    fontSize: 14,
     color: '#555',
-    marginVertical: 4,
+    marginBottom: 5,
+  },
+  status: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 10,
   },
   button: {
-    backgroundColor: '#e63946',
-    padding: 10,
-    borderRadius: 6,
+    backgroundColor: '#9b001e',
+    paddingVertical: 10,
+    borderRadius: 10,
     alignItems: 'center',
-    marginTop: 8,
   },
   buttonText: {
     color: '#fff',
     fontWeight: '600',
   },
-  status: {
-    fontWeight: 'bold',
-    fontSize: 13,
-    marginTop: 4,
-  },
-  unavailableImage: {
-    opacity: 0.3,
-  },
   modalBackground: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: '#00000099',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContainer: {
     backgroundColor: '#fff',
+    padding: 25,
+    borderRadius: 15,
     width: 300,
-    borderRadius: 8,
-    padding: 20,
-    elevation: 5,
+    alignItems: 'center',
   },
   modalTitle: {
-    fontWeight: 'bold',
     fontSize: 18,
-    marginBottom: 10,
-    textAlign: 'center',
+    fontWeight: 'bold',
+    marginBottom: 15,
   },
   input: {
+    width: '100%',
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 6,
+    borderColor: '#999',
+    borderRadius: 10,
     padding: 10,
     fontSize: 16,
     marginBottom: 20,
-    textAlign: 'center',
   },
   modalButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    width: '100%',
   },
   modalButton: {
     flex: 1,
-    paddingVertical: 10,
-    borderRadius: 6,
+    backgroundColor: '#9b001e',
+    padding: 12,
     marginHorizontal: 5,
+    borderRadius: 10,
     alignItems: 'center',
   },
   modalButtonText: {
-    fontWeight: 'bold',
-    fontSize: 16,
+    color: '#fff',
+    fontWeight: '600',
   },
 });
-
-export default MainDish;

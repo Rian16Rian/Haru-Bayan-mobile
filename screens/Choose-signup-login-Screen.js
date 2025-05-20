@@ -25,7 +25,7 @@ export default function ChooseSignupLogin({ navigation }) {
 
   const handleLogout = async () => {
     try {
-      await fetch('http://192.168.1.11:8000/api/logout/', { method: 'POST' });
+      await fetch('http://192.168.1.36:8000/api/logout/', { method: 'POST' });
       await AsyncStorage.removeItem('username');
       await AsyncStorage.removeItem('token');
       setUsername(null);
