@@ -1,11 +1,11 @@
-import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Image, View, StyleSheet } from 'react-native';
-import HomeScreen from '../screens/HomeScreen';
-import ServiceScreen from '../screens/ServiceScreen';
-import MenuScreen from '../screens/MenuScreen';
-import UserScreen from '../screens/Choose-signup-login-Screen';
+import React from 'react';
+import { Image, StyleSheet, View } from 'react-native';
 import Header from '../components/Header';
+import UserScreen from '../screens/Choose-signup-login-Screen';
+import HomeScreen from '../screens/HomeScreen';
+import MenuScreen from '../screens/MenuScreen';
+import ServiceScreen from '../screens/ServiceScreen';
 
 const Tab = createBottomTabNavigator();
 

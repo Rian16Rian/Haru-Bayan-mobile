@@ -1,5 +1,6 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, ImageBackground, Alert } from 'react-native';
+import { Alert, Image, ImageBackground, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const LoginScreen = ({ navigation }) => {
   const [username, setUsername] = useState('');
@@ -12,7 +13,7 @@ const LoginScreen = ({ navigation }) => {
     }
 
     try {
-      const response = await fetch('http://192.168.1.9:8000/api/login/', {
+      const response = await fetch('http://192.168.1.11:8000/api/login/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -23,8 +24,13 @@ const LoginScreen = ({ navigation }) => {
       const data = await response.json();
 
       if (response.status === 200) {
+        await AsyncStorage.setItem('username', username);
+        if (data.supabase_token) {
+          await AsyncStorage.setItem('token', data.supabase_token);
+        }
         Alert.alert('Success', data.message);
-        navigation.navigate('MenuScreen');
+        navigation.navigate('Welcome'); // or the screen name where user should go
+      
       } else {
         Alert.alert('Login Failed', data.message || 'Invalid credentials.');
       }

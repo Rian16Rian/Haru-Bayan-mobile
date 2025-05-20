@@ -1,29 +1,37 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import React, { useEffect, useState } from 'react';
+import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../AuthContext'; // Adjust path as needed
+
 
 const Appetizers = () => {
   const [recipes, setRecipes] = useState([]);
   const navigation = useNavigation();
+  const { user } = useAuth(); // ✅ get user
+
+  // ✅ Add this to debug user value
+  useEffect(() => {
+    console.log("Appetizers screen - user:", user);
+  }, [user]);
 
   useEffect(() => {
     const fetchMenu = async () => {
       const { data, error } = await supabase
-  .from("menu")
-  .select(`
-    id,
-    price,
-    description,
-    available, 
-    recipes:recipe_id (
-      name,
-      category,
-      image_url
-    )
-  `)
-  .eq('recipes.category', 'Appetizers');
+        .from("menu")
+        .select(`
+          id,
+          price,
+          description,
+          available, 
+          recipes:recipe_id (
+            name,
+            category,
+            image_url
+          )
+        `)
+        .eq('recipes.category', 'Appetizers');
 
       if (error) {
         console.error("Error fetching menu:", error);
@@ -34,6 +42,35 @@ const Appetizers = () => {
 
     fetchMenu();
   }, []);
+
+
+  const handleAddToOrder = async (item) => {
+    if (!user) {
+      alert('Please log in to add items to your order.');
+      return;
+    }
+  
+    try {
+      const { error } = await supabase.from('orders').insert([
+        {
+          user_id: user.id,
+          menu_id: item.id, // or however your menu is related
+          quantity: 1, // Default to 1, you can customize this
+          status: 'pending', // Optional, depends on your schema
+        },
+      ]);
+  
+      if (error) {
+        console.error('Add to order failed:', error);
+        alert('Something went wrong adding to order.');
+      } else {
+        alert('Item added to order!');
+      }
+    } catch (err) {
+      console.error('Unexpected error:', err);
+    }
+  };
+  
 
   const renderItem = ({ item }) => {
     if (!item.recipes) return null;
@@ -58,14 +95,13 @@ const Appetizers = () => {
           {isAvailable ? 'AVAILABLE' : 'UNAVAILABLE'}
         </Text>
         <TouchableOpacity
-          style={[
-            styles.button,
-            !isAvailable && { backgroundColor: '#aaa' },
-          ]}
-          disabled={!isAvailable}
-        >
-          <Text style={styles.buttonText}>Add to Order</Text>
-        </TouchableOpacity>
+  style={[styles.button, !isAvailable && { backgroundColor: '#aaa' }]}
+  disabled={!isAvailable}
+  onPress={() => handleAddToOrder(item)}
+>
+  <Text style={styles.buttonText}>Add to Order</Text>
+</TouchableOpacity>
+
       </View>
     );
   };

@@ -1,17 +1,43 @@
-import React from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
+  Alert,
   Image,
   ImageBackground,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 
 export default function ChooseSignupLogin({ navigation }) {
+  const [username, setUsername] = useState(null);
+
+  useEffect(() => {
+    const checkLogin = async () => {
+      const storedUsername = await AsyncStorage.getItem('username');
+      if (storedUsername) {
+        setUsername(storedUsername);
+      }
+    };
+    checkLogin();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await fetch('http://192.168.1.11:8000/api/logout/', { method: 'POST' });
+      await AsyncStorage.removeItem('username');
+      await AsyncStorage.removeItem('token');
+      setUsername(null);
+      Alert.alert('Success', 'You have been logged out.');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to log out.');
+    }
+  };
+
   return (
     <ImageBackground
-      source={require('../assets/temple.jpg')} // Use your actual image path
+      source={require('../assets/temple.jpg')}
       style={styles.background}
       resizeMode="cover"
     >
@@ -24,21 +50,34 @@ export default function ChooseSignupLogin({ navigation }) {
           <Text style={styles.title}>HARU-BAYAN</Text>
           <Text style={styles.subtitle}>A Taste of Spring in Every Dish</Text>
 
-          <Text style={styles.welcome}>Welcome Back!</Text>
+          <Text style={styles.welcome}>
+            {username ? `Welcome back, ${username}!` : 'Welcome Back!'}
+          </Text>
 
-          <TouchableOpacity
-            style={styles.signInButton}
-            onPress={() => navigation.navigate('UserLogin')}
-          >
-            <Text style={styles.signInText}>LOG IN</Text>
-          </TouchableOpacity>
+          {!username ? (
+            <>
+              <TouchableOpacity
+                style={styles.signInButton}
+                onPress={() => navigation.navigate('UserLogin')}
+              >
+                <Text style={styles.signInText}>LOG IN</Text>
+              </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.signUpButton}
-            onPress={() => navigation.navigate('UserSignup')}
-          >
-            <Text style={styles.signUpText}>SIGN UP</Text>
-          </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.signUpButton}
+                onPress={() => navigation.navigate('UserSignup')}
+              >
+                <Text style={styles.signUpText}>SIGN UP</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <TouchableOpacity
+              style={styles.logoutButton}
+              onPress={handleLogout}
+            >
+              <Text style={styles.logoutText}>LOG OUT</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </ImageBackground>
@@ -59,16 +98,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   card: {
-    backgroundColor: 'rgba(255, 255, 255, 0.6)', // semi-transparent white
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
     borderRadius: 30,
     paddingVertical: 40,
     paddingHorizontal: 25,
     width: '85%',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
     elevation: 10,
   },
   logo: {
@@ -115,6 +150,17 @@ const styles = StyleSheet.create({
     borderRadius: 30,
   },
   signUpText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  logoutButton: {
+    backgroundColor: '#8b0000',
+    paddingVertical: 12,
+    paddingHorizontal: 60,
+    borderRadius: 30,
+  },
+  logoutText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
