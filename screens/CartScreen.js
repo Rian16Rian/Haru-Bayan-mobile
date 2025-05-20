@@ -1,154 +1,343 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Modal, TextInput, StyleSheet, ActivityIndicator } from 'react-native';
-import { createClient } from '@supabase/supabase-js';
-import { Picker } from '@react-native-picker/picker';
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  ActivityIndicator,
+  TouchableOpacity,
+  Alert,
+  Image,
+} from 'react-native';
+import { supabase } from '../lib/supabase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
 
-const supabaseUrl = 'https://lngdoqimxolarajflobo.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxuZ2RvcWlteG9sYXJhamZsb2JvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ0MjQ5MDQsImV4cCI6MjA2MDAwMDkwNH0.hDroH3E7cq-RHh8iGsbg5s1tdYVSHMI94ZSZXzoABic';
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-export default function OrdersScreen() {
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [thankYouVisible, setThankYouVisible] = useState(false);
-  const [selectedOrderType, setSelectedOrderType] = useState('dine-in');
-  const [selectedOrderId, setSelectedOrderId] = useState(null);
-  const [editQuantityModal, setEditQuantityModal] = useState(false);
-  const [newQuantity, setNewQuantity] = useState('');
-
-  const fetchOrders = async () => {
-    setLoading(true);
-    const { data, error } = await supabase.from('order').select('*');
-    if (!error) {
-      setOrders(data);
-    }
-    setLoading(false);
-  };
+export default function OrderCart() {
+  const [cartItems, setCartItems] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [totalAmount, setTotalAmount] = useState(0);
+  const navigation = useNavigation();
 
   useEffect(() => {
-    fetchOrders();
+    fetchCart();
+    const unsubscribe = navigation.addListener('focus', fetchCart);
+    return unsubscribe;
   }, []);
 
-  const confirmOrder = async () => {
-    // You can update order status in Supabase if needed here
-    setModalVisible(false);
-    setThankYouVisible(true);
+  async function fetchCart() {
+    setLoading(true);
+    try {
+      const username = await AsyncStorage.getItem('username');
+      if (!username) {
+        Alert.alert('Error', 'User not logged in');
+        setLoading(false);
+        return;
+      }
+
+      const { data: customer, error: customerError } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('username', username)
+        .single();
+
+      if (customerError) {
+        Alert.alert('Error', customerError.message);
+        setLoading(false);
+        return;
+      }
+
+      const userId = customer.id;
+
+      const { data, error } = await supabase
+        .from('customers_order')
+        .select(`
+          id,
+          quantity,
+          total_price,
+          menu_item:menu (
+            id,
+            price,
+            recipes (
+              name,
+              image_url
+            )
+          )
+        `)
+        .eq('customer_id', userId);
+
+      if (error) {
+        Alert.alert('Error', error.message);
+      } else {
+        setCartItems(data);
+        const total = data.reduce((acc, item) => acc + item.total_price, 0);
+        setTotalAmount(total);
+      }
+    } catch (err) {
+      Alert.alert('Error', err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const handleDelete = async (itemId) => {
+    const { error } = await supabase.from('customers_order').delete().eq('id', itemId);
+    if (error) {
+      Alert.alert('Error', error.message);
+    } else {
+      fetchCart();
+    }
   };
 
-  const deleteOrder = async (id) => {
-    await supabase.from('order').delete().eq('id', id);
-    fetchOrders();
+  const handleQuantityChange = async (itemId, newQuantity, menuId) => {
+    if (newQuantity < 1) {
+      handleDelete(itemId);
+      return;
+    }
+
+    const { data: menuItem } = await supabase
+      .from('menu')
+      .select('price')
+      .eq('id', menuId)
+      .single();
+
+    const newTotal = menuItem.price * newQuantity;
+
+    const { error } = await supabase
+      .from('customers_order')
+      .update({
+        quantity: newQuantity,
+        total_price: newTotal,
+      })
+      .eq('id', itemId);
+
+    if (error) {
+      Alert.alert('Error', error.message);
+    } else {
+      fetchCart();
+    }
   };
 
-  const updateQuantity = async () => {
-    if (!newQuantity) return;
-    await supabase.from('order').update({ quantity: parseInt(newQuantity) }).eq('id', selectedOrderId);
-    setEditQuantityModal(false);
-    setNewQuantity('');
-    fetchOrders();
+  const confirmPlaceOrder = async () => {
+    Alert.alert(
+      'Confirm Order',
+      'Are you sure you want to place your order?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Yes',
+          onPress: async () => {
+            try {
+              const username = await AsyncStorage.getItem('username');
+              if (!username) {
+                Alert.alert('Error', 'User not logged in');
+                return;
+              }
+
+              // Get user id
+              const { data: customer, error: customerError } = await supabase
+                .from('customers')
+                .select('id')
+                .eq('username', username)
+                .single();
+
+              if (customerError) {
+                Alert.alert('Error', customerError.message);
+                return;
+              }
+
+              // Delete all orders for this user
+              const { error } = await supabase
+                .from('customers_order')
+                .delete()
+                .eq('customer_id', customer.id);
+
+              if (error) {
+                Alert.alert('Error', error.message);
+              } else {
+                Alert.alert('Order Placed', 'Thank you for your order!');
+                fetchCart(); // refresh cart to show empty
+              }
+            } catch (err) {
+              Alert.alert('Error', err.message);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const renderItem = ({ item }) => (
-    <View style={styles.card}>
-      <Text style={styles.title}>{item.dish_name}</Text>
-      <Text style={styles.text}>Quantity: {item.quantity}</Text>
-      <Text style={styles.text}>Price: ₱{item.price}</Text>
-      <TouchableOpacity onPress={() => {
-        setSelectedOrderId(item.id);
-        setEditQuantityModal(true);
-      }} style={styles.button}><Text style={styles.buttonText}>Edit</Text></TouchableOpacity>
-      <TouchableOpacity onPress={() => deleteOrder(item.id)} style={[styles.button, { backgroundColor: '#c0392b' }]}><Text style={styles.buttonText}>Delete</Text></TouchableOpacity>
+    <View style={styles.cartItem}>
+      <Image source={{ uri: item.menu_item.recipes.image_url }} style={styles.itemImage} />
+      <View style={styles.itemDetails}>
+        <Text style={styles.itemName}>{item.menu_item.recipes.name}</Text>
+        <Text style={styles.itemQty}>Qty: {item.quantity}</Text>
+        <Text style={styles.itemPrice}>₱{item.menu_item.price.toFixed(2)}</Text>
+        <Text style={styles.totalPrice}>Total: ₱{item.total_price.toFixed(2)}</Text>
+
+        <View style={styles.actionButtons}>
+          <TouchableOpacity
+            style={styles.adjustButton}
+            onPress={() =>
+              handleQuantityChange(item.id, item.quantity + 1, item.menu_item.id)
+            }
+          >
+            <Text style={styles.buttonText}>+1</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.adjustButton}
+            onPress={() =>
+              handleQuantityChange(item.id, item.quantity - 1, item.menu_item.id)
+            }
+          >
+            <Text style={styles.buttonText}>-1</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.deleteButton}
+            onPress={() => handleDelete(item.id)}
+          >
+            <Text style={styles.buttonText}>Delete</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     </View>
   );
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Your Orders</Text>
-      {loading ? <ActivityIndicator size="large" color="#9b001e" /> : (
-        <FlatList
-          data={orders}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={renderItem}
-          numColumns={2}
-          contentContainerStyle={{ gap: 10 }}
-        />
+      <Text style={styles.title}>Your Order</Text>
+
+      {loading ? (
+        <ActivityIndicator size="large" color="#9b001e" />
+      ) : cartItems.length === 0 ? (
+        <Text style={styles.emptyText}>Your cart is empty</Text>
+      ) : (
+        <>
+          <FlatList
+            data={cartItems}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={renderItem}
+            contentContainerStyle={{ paddingBottom: 20 }}
+          />
+
+          <View style={styles.totalContainer}>
+            <Text style={styles.totalLabel}>Total:</Text>
+            <Text style={styles.totalValue}>₱{totalAmount.toFixed(2)}</Text>
+          </View>
+
+          <TouchableOpacity style={styles.orderButton} onPress={confirmPlaceOrder}>
+            <Text style={styles.orderText}>Place Order</Text>
+          </TouchableOpacity>
+        </>
       )}
-      <TouchableOpacity style={styles.placeOrderBtn} onPress={() => setModalVisible(true)}>
-        <Text style={styles.placeOrderText}>Place Order →</Text>
-      </TouchableOpacity>
-
-      {/* Confirm Modal */}
-      <Modal visible={modalVisible} transparent animationType="fade">
-        <View style={styles.modalBackground}>
-          <View style={styles.modalBox}>
-            <Text style={styles.modalTitle}>Your Orders to Confirm:</Text>
-            <Picker
-              selectedValue={selectedOrderType}
-              onValueChange={(value) => setSelectedOrderType(value)}
-              style={styles.dropdown}>
-              <Picker.Item label="🍽️ Dine-In" value="dine-in" />
-              <Picker.Item label="🥡 Takeout" value="takeout" />
-            </Picker>
-            <TouchableOpacity onPress={confirmOrder} style={styles.modalBtn}>
-              <Text style={styles.modalBtnText}>Confirm Order</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Thank You Modal */}
-      <Modal visible={thankYouVisible} transparent animationType="fade">
-        <View style={styles.modalBackground}>
-          <View style={styles.modalBox}>
-            <Text style={styles.modalTitle}>Thank You!</Text>
-            <TouchableOpacity onPress={() => setThankYouVisible(false)} style={styles.modalBtn}>
-              <Text style={styles.modalBtnText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Edit Quantity Modal */}
-      <Modal visible={editQuantityModal} transparent animationType="fade">
-        <View style={styles.modalBackground}>
-          <View style={styles.modalBox}>
-            <Text style={styles.modalTitle}>Edit Quantity</Text>
-            <TextInput
-              value={newQuantity}
-              onChangeText={setNewQuantity}
-              placeholder="Enter new quantity"
-              keyboardType="numeric"
-              style={styles.input}
-            />
-            <TouchableOpacity onPress={updateQuantity} style={styles.modalBtn}>
-              <Text style={styles.modalBtnText}>Save</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setEditQuantityModal(false)} style={[styles.modalBtn, { backgroundColor: '#ccc' }]}> 
-              <Text style={[styles.modalBtnText, { color: '#333' }]}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f9fa', paddingTop: 50, paddingHorizontal: 10 },
-  header: { fontSize: 24, fontWeight: 'bold', color: '#9b001e', marginBottom: 10, textAlign: 'center' },
-  card: { backgroundColor: '#fff', padding: 16, borderRadius: 12, margin: 8, flex: 1, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 6, elevation: 3 },
-  title: { fontSize: 18, fontWeight: 'bold', color: '#9b001e' },
-  text: { fontSize: 14, marginVertical: 4, color: '#555' },
-  button: { backgroundColor: '#9b001e', padding: 8, marginVertical: 5, borderRadius: 8, alignItems: 'center' },
-  buttonText: { color: '#fff', fontWeight: 'bold' },
-  placeOrderBtn: { position: 'absolute', bottom: 30, right: 30, backgroundColor: '#ce153a', padding: 14, borderRadius: 12, elevation: 4 },
-  placeOrderText: { color: '#fff', fontWeight: 'bold' },
-  modalBackground: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' },
-  modalBox: { backgroundColor: '#fff', borderRadius: 12, padding: 24, width: '85%', alignItems: 'center' },
-  modalTitle: { fontSize: 20, fontWeight: 'bold', color: '#9b001e', marginBottom: 20 },
-  dropdown: { width: '100%', height: 50, borderColor: '#9b001e', borderWidth: 1, borderRadius: 8, marginBottom: 20 },
-  modalBtn: { backgroundColor: '#9b001e', padding: 12, borderRadius: 10, marginTop: 10, width: '100%', alignItems: 'center' },
-  modalBtnText: { color: '#fff', fontWeight: 'bold' },
-  input: { borderWidth: 1, borderColor: '#9b001e', borderRadius: 8, padding: 10, width: '100%', marginBottom: 10 },
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#fff',
+  },
+  title: {
+    fontSize: 26,
+    marginTop: 20,
+    fontWeight: 'bold',
+    color: '#9b001e',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  cartItem: {
+    flexDirection: 'row',
+    backgroundColor: '#fff1f3',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 15,
+    elevation: 2,
+  },
+  itemImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 10,
+  },
+  itemDetails: {
+    flex: 1,
+    marginLeft: 10,
+  },
+  itemName: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+  },
+  itemQty: {
+    fontSize: 14,
+    marginTop: 2,
+    color: '#555',
+  },
+  itemPrice: {
+    fontSize: 14,
+    color: '#777',
+  },
+  totalPrice: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#9b001e',
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    marginTop: 6,
+    gap: 6,
+  },
+  adjustButton: {
+    backgroundColor: '#e5e5e5',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 6,
+  },
+  deleteButton: {
+    backgroundColor: '#ff4d4d',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 6,
+  },
+  buttonText: {
+    color: '#000',
+    fontWeight: 'bold',
+  },
+  totalContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 15,
+    borderTopWidth: 1,
+    borderColor: '#ddd',
+  },
+  totalLabel: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  totalValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#9b001e',
+  },
+  orderButton: {
+    backgroundColor: '#9b001e',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  orderText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  emptyText: {
+    textAlign: 'center',
+    marginTop: 50,
+    fontSize: 18,
+    color: '#999',
+  },
 });
