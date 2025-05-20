@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Alert, Image, ImageBackground, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const UserSignupScreen = ({ navigation }) => {
@@ -14,7 +14,7 @@ const UserSignupScreen = ({ navigation }) => {
     }
 
     try {
-      const response = await fetch('http://192.168.1.36:8000/api/auth/signup/', {
+      const response = await fetch('http://192.168.41.12:8000/api/auth/signup/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -27,7 +27,8 @@ const UserSignupScreen = ({ navigation }) => {
         }),
       });
 
-      const data = await response.json();
+const data = await response.json();
+console.log('Signup response:', data);  // 🔍 Add this line
 
       if (response.ok) {
         navigation.navigate('OtpVerificationScreen', { username: fullName });

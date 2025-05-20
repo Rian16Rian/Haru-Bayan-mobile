@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Alert,
   Image,
@@ -25,7 +25,7 @@ export default function ChooseSignupLogin({ navigation }) {
 
   const handleLogout = async () => {
     try {
-      await fetch('http://192.168.1.36:8000/api/logout/', { method: 'POST' });
+      await fetch('http://192.168.41.12:8000/api/logout/', { method: 'POST' });
       await AsyncStorage.removeItem('username');
       await AsyncStorage.removeItem('token');
       setUsername(null);
