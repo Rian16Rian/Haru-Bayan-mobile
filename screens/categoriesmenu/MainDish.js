@@ -1,19 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
+import { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
+  Alert,
   FlatList,
   Image,
-  StyleSheet,
-  TouchableOpacity,
   Modal,
+  StyleSheet,
+  Text,
   TextInput,
-  Alert,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../lib/supabase';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const MainDish = () => {
   const [recipes, setRecipes] = useState([]);
