@@ -8,7 +8,7 @@ const OtpVerificationScreen = ({ route, navigation }) => {
 
   const handleVerifyOtp = async () => {
     try {
-      const response = await fetch('http://192.168.41.12:8000/api/auth/verify-otp/', {
+      const response = await fetch('http://192.168.1.36:8000/api/auth/verify-otp/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, otp }),
