@@ -1,30 +1,40 @@
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
-import React, { useEffect, useState } from 'react';
-import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import {
+  Alert,
+  FlatList,
+  Image,
+  Modal,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { supabase } from '../../lib/supabase';
-import { useAuth } from '../AuthContext'; // Adjust path as needed
-
 
 const Appetizers = () => {
   const [recipes, setRecipes] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedQuantity, setSelectedQuantity] = useState('1');
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [username, setUsername] = useState(null);
   const navigation = useNavigation();
-  const { user } = useAuth(); // ✅ get user
-
-  // ✅ Add this to debug user value
-  useEffect(() => {
-    console.log("Appetizers screen - user:", user);
-  }, [user]);
 
   useEffect(() => {
     const fetchMenu = async () => {
+      const storedUsername = await AsyncStorage.getItem('username');
+      setUsername(storedUsername);
+
       const { data, error } = await supabase
         .from("menu")
         .select(`
           id,
           price,
           description,
-          available, 
+          available,
           recipes:recipe_id (
             name,
             category,
@@ -43,50 +53,79 @@ const Appetizers = () => {
     fetchMenu();
   }, []);
 
+  const handleAddToOrderPress = (item) => {
+    setSelectedItem(item);
+    setSelectedQuantity('1');
+    setModalVisible(true);
+  };
 
-  const handleAddToOrder = async (item) => {
-    if (!user) {
-      alert('Please log in to add items to your order.');
+  const handleConfirmOrder = async () => {
+    if (!username) {
+      Alert.alert('Login Required', 'Please login to confirm your order.', [
+        { text: 'OK', onPress: () => navigation.navigate('UserLogin') },
+      ]);
+      setModalVisible(false);
       return;
     }
-  
+
+    const quantity = parseInt(selectedQuantity);
+    if (!quantity || quantity <= 0) {
+      alert('Please enter a valid quantity.');
+      return;
+    }
+
+    const total = selectedItem.price * quantity;
+
+    const { data: customerData, error: customerError } = await supabase
+      .from('customers')
+      .select('id')
+      .eq('username', username)
+      .single();
+
+    if (customerError || !customerData) {
+      alert('Customer not found.');
+      setModalVisible(false);
+      return;
+    }
+
+    const customer_id = customerData.id;
+
     try {
-      const { error } = await supabase.from('orders').insert([
+      const { error: insertError } = await supabase.from('customers_order').insert([
         {
-          user_id: user.id,
-          menu_id: item.id, // or however your menu is related
-          quantity: 1, // Default to 1, you can customize this
-          status: 'pending', // Optional, depends on your schema
+          customer_id,
+          menu_item_id: selectedItem.id,
+          quantity,
+          total_price: total,
+          status: 'pending',
         },
       ]);
-  
-      if (error) {
-        console.error('Add to order failed:', error);
-        alert('Something went wrong adding to order.');
+
+      if (insertError) {
+        alert('Failed to confirm order: ' + insertError.message);
       } else {
-        alert('Item added to order!');
+        alert('Order confirmed!');
+        setModalVisible(false);
       }
-    } catch (err) {
-      console.error('Unexpected error:', err);
+    } catch (e) {
+      alert('Unexpected error: ' + e.message);
     }
   };
-  
 
   const renderItem = ({ item }) => {
     if (!item.recipes) return null;
-  
+
     const { name, image_url } = item.recipes;
-    const fullImageUrl = image_url || null;
-    const isAvailable = item.available; // update from is_available if needed
-  
+    const isAvailable = item.available;
+
     return (
       <View style={styles.card}>
-        {fullImageUrl && (
+        {image_url && (
           <Image
-          source={{ uri: fullImageUrl }}
-          style={[styles.image, !isAvailable && styles.unavailableImage]}
-          onError={() => console.log('Image failed to load:', fullImageUrl)}
-        />        
+            source={{ uri: image_url }}
+            style={[styles.image, !isAvailable && styles.unavailableImage]}
+            onError={() => console.log('Image failed to load:', image_url)}
+          />
         )}
         <Text style={styles.name}>{String(name)}</Text>
         <Text style={styles.price}>₱{parseFloat(item.price).toFixed(2)}</Text>
@@ -95,17 +134,15 @@ const Appetizers = () => {
           {isAvailable ? 'AVAILABLE' : 'UNAVAILABLE'}
         </Text>
         <TouchableOpacity
-  style={[styles.button, !isAvailable && { backgroundColor: '#aaa' }]}
-  disabled={!isAvailable}
-  onPress={() => handleAddToOrder(item)}
->
-  <Text style={styles.buttonText}>Add to Order</Text>
-</TouchableOpacity>
-
+          style={[styles.button, !isAvailable && { backgroundColor: '#aaa' }]}
+          disabled={!isAvailable}
+          onPress={() => handleAddToOrderPress(item)}
+        >
+          <Text style={styles.buttonText}>Add to Order</Text>
+        </TouchableOpacity>
       </View>
     );
   };
-  
 
   return (
     <View style={styles.container}>
@@ -114,7 +151,7 @@ const Appetizers = () => {
           <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Appetizers</Text>
-        <View style={{ width: 24 }} /> 
+        <View style={{ width: 24 }} />
       </View>
 
       <FlatList
@@ -123,10 +160,43 @@ const Appetizers = () => {
         renderItem={renderItem}
         contentContainerStyle={styles.list}
       />
+
+      <Modal
+        visible={modalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Select Quantity</Text>
+            <TextInput
+              style={styles.input}
+              keyboardType="numeric"
+              value={selectedQuantity}
+              onChangeText={setSelectedQuantity}
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={styles.modalButton} onPress={handleConfirmOrder}>
+                <Text style={styles.modalButtonText}>Confirm</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: '#ccc' }]}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.modalButtonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
 
+export default Appetizers;
+
+// Same styles + modal styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -194,9 +264,50 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   unavailableImage: {
-    opacity: 0.3, // visually looks like gray/dimmed
+    opacity: 0.3,
   },
-  
+  modalBackground: {
+    flex: 1,
+    backgroundColor: '#00000099',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    backgroundColor: '#fff',
+    padding: 25,
+    borderRadius: 15,
+    width: 300,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 15,
+  },
+  input: {
+    width: '100%',
+    borderWidth: 1,
+    borderColor: '#999',
+    borderRadius: 10,
+    padding: 10,
+    fontSize: 16,
+    marginBottom: 20,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  modalButton: {
+    flex: 1,
+    backgroundColor: '#e63946',
+    padding: 12,
+    marginHorizontal: 5,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+  },
 });
-
-export default Appetizers;
