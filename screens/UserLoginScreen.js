@@ -13,7 +13,7 @@ const LoginScreen = ({ navigation }) => {
     }
 
     try {
-      const response = await fetch('http://192.168.1.36:8000/api/login/', {
+      const response = await fetch('https://harubayan-backend.onrender.com/api/login/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
