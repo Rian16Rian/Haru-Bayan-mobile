@@ -1,29 +1,33 @@
 {
   "expo": {
-    "name": "Haru-Bayan",
+    "name": "HaruBayan",
     "slug": "Haru-Bayan",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/harulogo.png",
+    "icon": "./assets/haru-logo.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/haru-logo.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#9b001e"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.kristaline03.HaruBayan",
+      "infoPlist": {
+        "CFBundleDisplayName": "HaruBayan"
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/haru-logo.png",
+        "backgroundColor": "#9b001e"
       },
       "package": "com.kristaline03.HaruBayan"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/haru-logo.png"
     },
     "extra": {
       "eas": {

@@ -32,7 +32,7 @@ const OtpVerificationScreen = ({ route, navigation }) => {
     try {
       setResendCooldown(true);
 
-      const response = await fetch('http://192.168.41.12:8000/api/auth/resend-otp/', {
+      const response = await fetch('https://harubayan-backend.onrender.com/api/auth/resend-otp/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username }),

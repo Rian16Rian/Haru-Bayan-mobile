@@ -25,7 +25,7 @@ export default function ChooseSignupLogin({ navigation }) {
 
   const handleLogout = async () => {
     try {
-      await fetch('http://192.168.41.12:8000/api/logout/', { method: 'POST' });
+      await fetch('https://harubayan-backend.onrender.com/api/logout/', { method: 'POST' });
       await AsyncStorage.removeItem('username');
       await AsyncStorage.removeItem('token');
       setUsername(null);
